@@ -142,7 +142,6 @@ public class ReactorDebugAgent {
 											boolean isInterface) {
 										super.visitMethodInsn(opcode, owner,name, descriptor, isInterface);
 
-
 										if (!checkpointed) {
 											switch (owner) {
 												case "reactor/core/publisher/Flux":
