@@ -1,0 +1,80 @@
+/*
+ * Copyright (c) 2019-Present Pivotal Software Inc, All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+plugins {
+	id 'com.github.johnrengelman.shadow' version '4.0.3'
+	id "java"
+	id "maven-publish"
+}
+
+description = 'Reactor Tools'
+
+dependencies {
+	compileOnly 'io.projectreactor:reactor-core:3.2.6.RELEASE'
+
+	compile 'org.ow2.asm:asm:7.1'
+	compile 'net.bytebuddy:byte-buddy-agent:1.9.6'
+
+	testCompile 'io.projectreactor:reactor-core:3.2.6.RELEASE'
+	testCompile 'junit:junit:4.12'
+	testCompile "org.assertj:assertj-core:3.11.1"
+}
+
+test {
+	// Creates a JVM per test because the agent can be installed only once
+	forkEvery = 1
+	maxParallelForks = 1
+	jvmArgs = [
+		"-Xverify:all",
+		JavaVersion.current().isJava9Compatible()
+			? "-Xlog:redefine+class*=warning"
+			: "-XX:TraceRedefineClasses=2"
+	]
+}
+
+shadowJar {
+	classifier = null
+}
+
+project.tasks.build.dependsOn(shadowJar)
+
+task relocateShadowJar(type: com.github.jengelman.gradle.plugins.shadow.tasks.ConfigureShadowRelocation) {
+	target = tasks.shadowJar
+	prefix = "reactor.tools.shaded"
+}
+
+tasks.shadowJar.dependsOn tasks.relocateShadowJar
+
+task sourcesJar(type: Jar) {
+	classifier 'sources'
+	from sourceSets.main.allJava
+}
+
+task javadocJar(type: Jar) {
+	from javadoc
+	classifier = 'javadoc'
+}
+
+publishing {
+	publications {
+		mavenJava(MavenPublication) { publication ->
+			artifacts.removeAll { it.classifier == null }
+			artifact project.tasks.shadowJar
+			artifact sourcesJar
+			artifact javadocJar
+		}
+	}
+}
