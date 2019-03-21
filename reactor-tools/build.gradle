@@ -26,6 +26,7 @@ dependencies {
 	compileOnly 'io.projectreactor:reactor-core:3.2.6.RELEASE'
 
 	compile 'org.ow2.asm:asm:7.1'
+	compile 'org.ow2.asm:asm-commons:7.1'
 	compile 'net.bytebuddy:byte-buddy-agent:1.9.6'
 
 	testCompile 'io.projectreactor:reactor-core:3.2.6.RELEASE'

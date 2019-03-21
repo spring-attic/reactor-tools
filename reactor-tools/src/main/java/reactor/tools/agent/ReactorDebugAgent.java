@@ -27,7 +27,6 @@ import net.bytebuddy.agent.ByteBuddyAgent;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -43,15 +42,33 @@ public class ReactorDebugAgent {
 		}
 		instrumentation = ByteBuddyAgent.install();
 
-		ClassFileTransformer transformer = new PublicMethodsClassFileTransformer();
+		ClassFileTransformer transformer = new ClassFileTransformer() {
+			@Override
+			public byte[] transform(
+					ClassLoader loader,
+					String className,
+					Class<?> classBeingRedefined,
+					ProtectionDomain protectionDomain,
+					byte[] bytes
+			) {
+				if ("reactor/core/publisher/Hooks".equals(className)) {
+					ClassReader cr = new ClassReader(bytes);
+					ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_FRAMES);
+
+					ClassVisitor classVisitor = new HooksClassVisitor(cw);
+
+					cr.accept(classVisitor, 0);
+					return cw.toByteArray();
+				}
+
+				return null;
+			}
+		};
 		instrumentation.addTransformer(transformer, true);
 		try {
-			instrumentation.retransformClasses(
-					Hooks.class,
-					Hooks.class.getClassLoader().loadClass("reactor.core.publisher.FluxOnAssembly$AssemblySnapshot")
-			);
+			instrumentation.retransformClasses(Hooks.class);
 		}
-		catch (UnmodifiableClassException | ClassNotFoundException e) {
+		catch (UnmodifiableClassException e) {
 			throw new RuntimeException(e);
 		}
 		instrumentation.removeTransformer(transformer);
@@ -122,66 +139,10 @@ public class ReactorDebugAgent {
 							case "reactor/core/publisher/Flux":
 							case "reactor/core/publisher/Mono":
 							case "reactor/core/publisher/ParallelFlux":
-								visitor = new MethodVisitor(Opcodes.ASM7, visitor) {
-
-									private int currentLine = -1;
-
-									private boolean checkpointed = false;
-
-									@Override
-									public void visitLineNumber(int line, Label start) {
-										super.visitLineNumber(line, start);
-										currentLine = line;
-									}
-
-									@Override
-									public void visitMethodInsn(int opcode,
-											String owner,
-											String name,
-											String descriptor,
-											boolean isInterface) {
-										super.visitMethodInsn(opcode, owner,name, descriptor, isInterface);
-
-										if (!checkpointed) {
-											switch (owner) {
-												case "reactor/core/publisher/Flux":
-												case "reactor/core/publisher/Mono":
-												case "reactor/core/publisher/ParallelFlux":
-													if ("checkpoint".equals(name)) {
-														return;
-													}
-													String returnType = Type.getReturnType(descriptor).getInternalName();
-													if (returnType.startsWith("reactor/core/publisher/")) {
-														checkpointed = true;
-													}
-											}
-										}
-									}
-
-									@Override
-									public void visitInsn(int opcode) {
-										if (!checkpointed && Opcodes.ARETURN == opcode) {
-											changed.set(true);
-											String callSite = String.format(
-													"%s.%s(%s:%d)",
-													currentClassName.replace("/", "."), currentMethod, currentSource, currentLine
-											);
-											super.visitLdcInsn(callSite);
-											super.visitMethodInsn(
-													Opcodes.INVOKEVIRTUAL,
-													returnType,
-													"checkpoint",
-													"(Ljava/lang/String;)L" + returnType + ";",
-													false
-											);
-										}
-
-										super.visitInsn(opcode);
-									}
-								};
+								visitor = new ReturnHandlingMethodVisitor(visitor, returnType, currentClassName, currentMethod, currentSource, changed);
 						}
 
-						return new AssemblyInfoAddingMethodVisitor(visitor, currentMethod, currentClassName, currentSource, changed);
+						return new CallSiteInfoAddingMethodVisitor(visitor, currentClassName, currentMethod, currentSource, changed);
 					}
 				};
 
@@ -240,155 +201,4 @@ public class ReactorDebugAgent {
 		}
 	}
 
-
-	static class AssemblyInfoAddingMethodVisitor extends MethodVisitor {
-
-		private final String currentMethod;
-
-		private final String currentClassName;
-
-		private final String currentSource;
-
-		private final AtomicBoolean changed;
-
-		private int currentLine = -1;
-
-		AssemblyInfoAddingMethodVisitor(
-				MethodVisitor visitor,
-				String currentMethod,
-				String currentClassName,
-				String currentSource,
-				AtomicBoolean changed
-		) {
-			super(Opcodes.ASM7, visitor);
-			this.currentMethod = currentMethod;
-			this.currentClassName = currentClassName;
-			this.currentSource = currentSource;
-			this.changed = changed;
-		}
-
-		@Override
-		public void visitLineNumber(int line, Label start) {
-			super.visitLineNumber(line, start);
-			currentLine = line;
-		}
-
-		@Override
-		public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
-			super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
-			switch (owner) {
-				case "reactor/core/publisher/Flux":
-				case "reactor/core/publisher/Mono":
-				case "reactor/core/publisher/ParallelFlux":
-					if ("checkpoint".equals(name)) {
-						return;
-					}
-					String returnType = Type.getReturnType(descriptor).getInternalName();
-					if (!returnType.startsWith("reactor/core/publisher/")) {
-						return;
-					}
-
-					changed.set(true);
-					super.visitTypeInsn(Opcodes.NEW, "reactor/core/publisher/FluxOnAssembly$AssemblySnapshot");
-					super.visitInsn(Opcodes.DUP);
-
-					super.visitInsn(Opcodes.ACONST_NULL);
-
-					String callSite = String.format(
-							"\t%s.%s\n\t%s.%s(%s:%d)\n",
-							owner.replace("/", "."), name,
-							currentClassName.replace("/", "."), currentMethod, currentSource, currentLine
-					);
-					super.visitLdcInsn(callSite);
-					super.visitMethodInsn(
-							Opcodes.INVOKESTATIC,
-							"reactor/tools/agent/ConstantSupplier",
-							"of",
-							"(Ljava/lang/String;)Lreactor/tools/agent/ConstantSupplier;",
-							false
-					);
-					super.visitMethodInsn(
-							Opcodes.INVOKESPECIAL,
-							"reactor/core/publisher/FluxOnAssembly$AssemblySnapshot",
-							"<init>",
-							"(Ljava/lang/String;Ljava/util/function/Supplier;)V",
-							false
-					);
-					super.visitMethodInsn(
-							Opcodes.INVOKESTATIC,
-							"reactor/core/publisher/Hooks",
-							"addAssemblyInfo",
-							"(Lorg/reactivestreams/Publisher;Lreactor/core/publisher/FluxOnAssembly$AssemblySnapshot;)Lorg/reactivestreams/Publisher;",
-							false
-					);
-					super.visitTypeInsn(Opcodes.CHECKCAST, returnType);
-					break;
-			}
-		}
-	}
-
-	static class PublicMethodsClassFileTransformer implements ClassFileTransformer {
-
-		@Override
-		public byte[] transform(
-				ClassLoader loader,
-				String className,
-				Class<?> clazz,
-				ProtectionDomain protectionDomain,
-				byte[] bytes
-		) {
-			if ("reactor/core/publisher/FluxOnAssembly$AssemblySnapshot".equals(className)) {
-				ClassReader cr = new ClassReader(bytes);
-				ClassWriter cw = new ClassWriter(cr, 0);
-
-				ClassVisitor classVisitor = new ClassVisitor(Opcodes.ASM7, cw) {
-
-					@Override
-					public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-						access |= Opcodes.ACC_PUBLIC;
-						super.visit(version, access, name, signature, superName, interfaces);
-					}
-
-					@Override
-					public MethodVisitor visitMethod(int access,
-													 String name,
-													 String descriptor,
-													 String signature,
-													 String[] exceptions) {
-						if ("<init>".equals(name)) {
-							access |= Opcodes.ACC_PUBLIC;
-							access &= ~Opcodes.ACC_PRIVATE;
-						}
-						return super.visitMethod(access, name, descriptor, signature, exceptions);
-					}
-				};
-
-				cr.accept(classVisitor, 0);
-				return cw.toByteArray();
-			}
-
-			if ("reactor/core/publisher/Hooks".equals(className)) {
-				ClassReader cr = new ClassReader(bytes);
-				ClassWriter cw = new ClassWriter(cr, 0);
-
-				ClassVisitor classVisitor = new ClassVisitor(Opcodes.ASM7, cw) {
-					@Override
-					public MethodVisitor visitMethod(int access,
-							String name,
-							String descriptor,
-							String signature,
-							String[] exceptions) {
-						if ("addAssemblyInfo".equals(name)) {
-							access |= Opcodes.ACC_PUBLIC;
-						}
-						return super.visitMethod(access, name, descriptor, signature, exceptions);
-					}
-				};
-
-				cr.accept(classVisitor, 0);
-				return cw.toByteArray();
-			}
-			return null;
-		}
-	}
 }

@@ -21,6 +21,8 @@ import reactor.core.Scannable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.function.Function;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ReactorDebugAgentTest {
@@ -64,6 +66,15 @@ public class ReactorDebugAgentTest {
 
 		assertThat(Scannable.from(mono).stepName())
 				.startsWith("checkpoint(\"reactor.tools.agent.ReactorDebugAgentTest.methodReturningMono(ReactorDebugAgentTest.java:" + (methodReturningMonoBaseline + 2));
+	}
+
+	@Test
+	public void shouldWorkWithGroupedFlux() {
+		int baseline = getBaseline();
+		Flux<Integer> flux = Flux.just(1).groupBy(it -> it).blockFirst().map(Function.identity());
+
+		assertThat(Scannable.from(flux).stepName())
+				.startsWith("GroupedFlux.map ⇢ reactor.tools.agent.ReactorDebugAgentTest.shouldWorkWithGroupedFlux(ReactorDebugAgentTest.java:" + (baseline + 1));
 	}
 
 	static final int methodReturningMonoBaseline = getBaseline();
