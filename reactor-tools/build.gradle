@@ -42,8 +42,6 @@ task javadocJar(type: Jar) {
 publishing {
 	publications {
 		mavenJava(MavenPublication) { publication ->
-			artifacts.removeAll { it.classifier == null }
-			artifact project.tasks.shadowJar
 			artifact sourcesJar
 			artifact javadocJar
 		}
