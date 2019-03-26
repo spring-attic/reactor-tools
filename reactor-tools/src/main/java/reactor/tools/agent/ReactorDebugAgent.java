@@ -136,6 +136,9 @@ public class ReactorDebugAgent {
 
 						String returnType = Type.getReturnType(descriptor).getInternalName();
 						switch (returnType) {
+							// Handle every core publisher type.
+							// Note that classes like `GroupedFlux` or `ConnectableFlux` are not included,
+							// because they don't have a type-preserving "checkpoint" method
 							case "reactor/core/publisher/Flux":
 							case "reactor/core/publisher/Mono":
 							case "reactor/core/publisher/ParallelFlux":
