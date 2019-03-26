@@ -187,7 +187,7 @@ public class ReactorDebugAgent {
 							// May trigger NoClassDefFoundError, fail fast
 							aClass.getConstructors();
 						}
-						catch (NoClassDefFoundError e) {
+						catch (LinkageError e) {
 							return false;
 						}
 
