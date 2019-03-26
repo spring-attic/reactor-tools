@@ -44,6 +44,14 @@ test {
 			? "-Xlog:redefine+class*=warning"
 			: "-XX:TraceRedefineClasses=2"
 	]
+
+	testLogging {
+		displayGranularity 1
+		showStackTraces = true
+		exceptionFormat = 'full'
+		events "STARTED", "PASSED", "FAILED", "SKIPPED"
+
+	}
 }
 
 shadowJar {
