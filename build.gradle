@@ -27,4 +27,14 @@ subprojects {
 
 		sourceCompatibility = targetCompatibility = 1.8
 	}
+
+	plugins.withType(MavenPublishPlugin) {
+		project.publishing {
+			repositories {
+				maven {
+					url = uri("$rootProject.buildDir/repo")
+				}
+			}
+		}
+	}
 }
