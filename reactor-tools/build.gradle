@@ -48,6 +48,7 @@ test {
 	testLogging {
 		displayGranularity 1
 		showStackTraces = true
+		showStandardStreams = true
 		exceptionFormat = 'full'
 		events "STARTED", "PASSED", "FAILED", "SKIPPED"
 
