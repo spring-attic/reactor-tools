@@ -17,8 +17,8 @@ repositories {
 }
 
 dependencies {
-  testCompile 'io.projectreactor:reactor-tools:$LATEST_RELEASE'
-  // testCompile 'io.projectreactor:reactor-tools:$LATEST_SNAPSHOT'
+  compile 'io.projectreactor:reactor-tools:$LATEST_RELEASE'
+  // compile 'io.projectreactor:reactor-tools:$LATEST_SNAPSHOT'
 }
 ```
 Where:
