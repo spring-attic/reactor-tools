@@ -4,6 +4,8 @@
 [![](https://img.shields.io/badge/dynamic/xml.svg?label=Milestone&color=blue&query=%2F%2Fmetadata%2Fversion&url=https%3A%2F%2Frepo.spring.io%2Fmilestone%2Fio%2Fprojectreactor%2Freactor-tools%2Fmaven-metadata.xml)](https://repo.spring.io/milestone/io/projectreactor/reactor-tools/)
 [![](https://img.shields.io/badge/dynamic/xml.svg?label=Snapshot&color=orange&query=%2F%2Fmetadata%2Fversion&url=https%3A%2F%2Frepo.spring.io%2Fsnapshot%2Fio%2Fprojectreactor%2Freactor-tools%2Fmaven-metadata.xml)](https://repo.spring.io/snapshot/io/projectreactor/reactor-tools/)
 
+> ⚠️ This project is in incubating phase and may become a module of https://github.com/reactor/reactor-core in future.
+
 A set of tools to improve Project Reactor's debugging and development experience.
 
 ## Getting it
@@ -84,7 +86,7 @@ ReactorDebugAgent.processExistingClasses();
 
 ### Limitations
 Java 8 users **must use JDK** instead of JRE:  
-http://bytebuddy.net/javadoc/1.9.12/net/bytebuddy/agent/ByteBuddyAgent.html#install--
+https://bytebuddy.net/javadoc/1.9.12/net/bytebuddy/agent/ByteBuddyAgent.html#install--
 
 We plan to relax this requirement in future versions by shipping a "real" Java agent you can attach with the `-javaagent:` JVM flag.
 
