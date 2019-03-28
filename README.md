@@ -72,7 +72,7 @@ public static void main(String[] args) {
 }
 ```
 
-You may also re-process existing classes if you cannot eagerly run the init:
+You may also re-process existing classes if you cannot run the init eagerly:
 ```java
 ReactorDebugAgent.init();
 ReactorDebugAgent.processExistingClasses();
