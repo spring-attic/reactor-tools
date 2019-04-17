@@ -26,8 +26,6 @@ jobs:
   displayName: Publish SNAPSHOT
   pool:
     name: 'Hosted Ubuntu 1604'
-  workspace:
-    clean: all
   steps:
   - template: templates/publish.yml
     parameters:
