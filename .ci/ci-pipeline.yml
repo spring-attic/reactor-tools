@@ -1,0 +1,39 @@
+pr: [ master ]
+
+jobs:
+- job: build
+  displayName: Build
+  strategy:
+    matrix:
+      JDK8:
+        jdkVersionOption: '1.8'
+      JDK11:
+        jdkVersionOption: '1.11'
+  pool:
+    name: 'Hosted Ubuntu 1604'
+  steps:
+  - task: Gradle@2
+    displayName: Gradle build
+    inputs:
+      gradleWrapperFile: 'gradlew'
+      jdkVersionOption: $(jdkVersionOption)
+      options: '--no-daemon'
+      tasks: 'build javadoc'
+
+- job: publish
+  dependsOn: build
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+  displayName: Publish SNAPSHOT
+  pool:
+    name: 'Hosted Ubuntu 1604'
+  workspace:
+    clean: all
+  steps:
+  - task: DownloadPipelineArtifact@0
+    inputs:
+      artifactName: 'workspace'
+      targetPath: $(System.DefaultWorkingDirectory)
+  - template: templates/publish.yml
+    parameters:
+      repoId: libs-snapshot-local
+      version: 1.0.0.BUILD-SNAPSHOT
