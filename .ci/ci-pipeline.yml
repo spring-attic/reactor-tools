@@ -29,10 +29,6 @@ jobs:
   workspace:
     clean: all
   steps:
-  - task: DownloadPipelineArtifact@0
-    inputs:
-      artifactName: 'workspace'
-      targetPath: $(System.DefaultWorkingDirectory)
   - template: templates/publish.yml
     parameters:
       repoId: libs-snapshot-local
