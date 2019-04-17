@@ -20,7 +20,6 @@ import java.util.function.Supplier;
 
 /**
  * This is a helper class to return a static string supplier.
- * See {@link reactor.core.publisher.FluxOnAssembly.AssemblySnapshot}
  */
 @SuppressWarnings("unused")
 public class ConstantSupplier implements Supplier<String> {

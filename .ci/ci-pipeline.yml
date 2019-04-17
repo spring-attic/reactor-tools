@@ -17,7 +17,7 @@ jobs:
     inputs:
       gradleWrapperFile: 'gradlew'
       jdkVersionOption: $(jdkVersionOption)
-      options: '--no-daemon -x check'
+      options: '--no-daemon'
       tasks: 'build javadoc'
 
 - job: publish
