@@ -83,6 +83,8 @@ ReactorDebugAgent.processExistingClasses();
 > 
 > Use it only if you see that some call-sites are not instrumented.
 
+_Requires minimally `reactor-core:3.2.6`_
+
 
 ### Limitations
 Java 8 users **must use JDK** instead of JRE:  
