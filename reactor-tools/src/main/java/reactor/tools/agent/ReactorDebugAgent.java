@@ -149,7 +149,13 @@ public class ReactorDebugAgent {
 					}
 				};
 
-				cr.accept(classVisitor, 0);
+				try {
+					cr.accept(classVisitor, 0);
+				}
+				catch (Throwable e) {
+					e.printStackTrace();
+					throw e;
+				}
 
 				if (!changed.get()) {
 					return null;

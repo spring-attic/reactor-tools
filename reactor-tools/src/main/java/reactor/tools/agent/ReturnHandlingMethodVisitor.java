@@ -80,7 +80,7 @@ class ReturnHandlingMethodVisitor extends MethodVisitor {
 
     @Override
     public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
-        super.visitMethodInsn(opcode, owner,name, descriptor, isInterface);
+        super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
 
         if (!checkpointed && CallSiteInfoAddingMethodVisitor.isCorePublisher(owner)) {
             String returnType = Type.getReturnType(descriptor).getInternalName();
@@ -94,6 +94,11 @@ class ReturnHandlingMethodVisitor extends MethodVisitor {
     public void visitInsn(int opcode) {
         if (!checkpointed && Opcodes.ARETURN == opcode) {
             changed.set(true);
+
+            super.visitInsn(Opcodes.DUP);
+            Label atReturn = new Label();
+            super.visitJumpInsn(Opcodes.IFNULL, atReturn); // skip if null
+
             String callSite = String.format(
                     "%s.%s(%s:%d)",
                     currentClassName.replace("/", "."), currentMethod, currentSource, currentLine
@@ -106,6 +111,9 @@ class ReturnHandlingMethodVisitor extends MethodVisitor {
                     "(Ljava/lang/String;)L" + returnType + ";",
                     false
             );
+
+            super.visitLabel(atReturn);
+            super.visitFrame(Opcodes.F_SAME1, 0, null, 1, new Object[] { returnType });
         }
 
         super.visitInsn(opcode);
