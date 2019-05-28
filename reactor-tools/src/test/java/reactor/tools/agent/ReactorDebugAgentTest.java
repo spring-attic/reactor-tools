@@ -77,9 +77,21 @@ public class ReactorDebugAgentTest {
 				.startsWith("GroupedFlux.map ⇢ reactor.tools.agent.ReactorDebugAgentTest.shouldWorkWithGroupedFlux(ReactorDebugAgentTest.java:" + (baseline + 1));
 	}
 
+	// See https://github.com/reactor/reactor-tools/issues/7
+	@Test
+	public void shouldHandleNullReturnValue() {
+		Mono<Integer> mono = methodReturningNullMono();
+
+		assertThat(mono).isNull();
+	}
+
 	static final int methodReturningMonoBaseline = getBaseline();
 	private Mono<Integer> methodReturningMono(Mono<Integer> mono) {
 		return mono;
+	}
+
+	private Mono<Integer> methodReturningNullMono() {
+		return null;
 	}
 
 	private static int getBaseline() {
