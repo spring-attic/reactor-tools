@@ -4,7 +4,7 @@
 [![](https://img.shields.io/badge/dynamic/xml.svg?label=Milestone&color=blue&query=%2F%2Fmetadata%2Fversion&url=https%3A%2F%2Frepo.spring.io%2Fmilestone%2Fio%2Fprojectreactor%2Freactor-tools%2Fmaven-metadata.xml)](https://repo.spring.io/milestone/io/projectreactor/reactor-tools/)
 [![](https://img.shields.io/badge/dynamic/xml.svg?label=Snapshot&color=orange&query=%2F%2Fmetadata%2Fversion&url=https%3A%2F%2Frepo.spring.io%2Fsnapshot%2Fio%2Fprojectreactor%2Freactor-tools%2Fmaven-metadata.xml)](https://repo.spring.io/snapshot/io/projectreactor/reactor-tools/)
 
-> ⚠️ This project is in incubating phase and may or may not become a standalone project or a module of https://github.com/reactor/reactor-core in the future.
+> ⚠️ Starting from Reactor 3.3.0.M2, reactor-tools is now moved to https://github.com/reactor/reactor-core.
 
 A set of tools to improve Project Reactor's debugging and development experience.
 
