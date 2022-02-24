@@ -1,3 +1,5 @@
+# reactor-tools is no longer actively maintained by VMware, Inc.
+
 # Reactor tools (experimental)
 
 [![Travis CI](https://travis-ci.org/reactor/reactor-tools.svg?branch=master)](https://travis-ci.org/reactor/reactor-tools)
